@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#202c33">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Kaviraj Bus Service — Chat Simulator</title>
+<style>
+:root{--bg:#0b141a;--header:#202c33;--incoming:#202c33;--outgoing:#005c4b;--green:#00a884;--text:#e9edef;--muted:#aebac1;--line:#303d45}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#111b21;color:var(--text);font-family:Arial,Helvetica,sans-serif;scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}body{display:flex;justify-content:center;overflow:hidden}
+.app{height:100dvh;width:100%;max-width:520px;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+.header{height:59px;flex:0 0 59px;background:var(--header);display:flex;align-items:center;gap:10px;padding:0 12px;z-index:2}
+.back{font-size:25px;line-height:1;color:#d5dcdf}.avatar{height:38px;width:38px;flex:0 0 38px;border-radius:50%;background:#f5f6f6;color:#17415b;display:grid;place-items:center;overflow:hidden;font-size:12px;font-weight:800}.avatar img{width:100%;height:100%;object-fit:cover}.avatar{position:relative}.headtext{min-width:0;flex:1}.name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.verified{display:inline-grid;place-items:center;background:#53bdeb;color:#092b39;width:13px;height:13px;border-radius:50%;font-size:9px;margin-left:3px;vertical-align:1px}.sub{font-size:11px;color:#b4c0c6;margin-top:3px}.headicons{font-size:21px;display:flex;gap:18px;align-items:center}
+.chat{flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;padding:12px 9px 14px;background-color:#0b141a;background-image:url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%231b2a32' stroke-width='1.3' opacity='.85'%3E%3Ccircle cx='28' cy='27' r='12'/%3E%3Cpath d='M20 27h16M28 19v16M88 17l7 12H81zM135 34q12-14 22 0t-11 15q-15-2-11-15zM25 105l18-8 8 17-17 8zM92 95q15-17 23 0l-11 15zM84 145h25m-12-12v25M4 65q10-13 19 0t-10 12zM143 140q11-13 21 0t-10 12z'/%3E%3C/g%3E%3C/svg%3E")}
+.chat::-webkit-scrollbar{display:none;width:0;height:0}.datepill{margin:2px auto 13px;width:max-content;border-radius:7px;background:#182229;color:#d5dcdf;font-size:11px;padding:6px 12px;font-weight:500;text-transform:capitalize}
+.row{display:flex;margin:6px 0}.row.in{justify-content:flex-start}.row.out{justify-content:flex-end}
+.bubble{max-width:88%;min-width:78px;background:var(--incoming);border-radius:8px;padding:7px 8px 5px;font-size:12.5px;line-height:1.38;overflow-wrap:anywhere;box-shadow:0 1px 1px #0003}
+.in .bubble{border-top-left-radius:0}
+.out .bubble{background:var(--outgoing);border-top-right-radius:0}
+.bubble.ticket-bubble{padding:0;overflow:hidden;border-radius:8px;border-top-left-radius:0;width:100%;max-width:320px}
+.ticket-img-box{width:100%;background:#ffffff;margin:0;padding:0;cursor:pointer;position:relative}
+.ticket-img-box img{width:100%;height:auto;display:block;margin:0;padding:0;border:0;object-fit:cover}
+.ticket-body{padding:10px 10px 6px 10px}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:4px;color:#aebac1;font-size:9px;margin-top:4px;line-height:11px;padding-right:4px}
+.ticks{color:#53bdeb;letter-spacing:-3px;font-size:12px;padding-right:2px}
+.options{display:flex;gap:6px;margin-top:8px}
+.option{flex:1;border:0;border-radius:6px;background:#252f34;color:#00d989;padding:9px 10px;text-align:center;font-size:13px;font-weight:500;cursor:pointer}
+.option:hover{background:#304047}
+.option.primary{width:100%;background:#202c33;color:#53bdeb;font-weight:600;border-radius:6px;padding:10px;border:1px solid #2f3b43}
+.option.primary:hover{background:#2a3942}
+.card{background:#1b2226;border-radius:5px;margin-top:5px;overflow:hidden}.cardhead{font-size:11px;color:#34d9ba;font-weight:700;padding:8px;background:#202c33}.cardbody{padding:8px}.orderid{font-size:9px;letter-spacing:.7px;color:#b4c0c6;padding-bottom:7px;border-bottom:1px dashed #3b464c}.item{margin:8px 0 5px;font-weight:600}.line{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:12px}.line span{color:#d2d9dc}.total{border-top:1px dashed #3b464c;padding-top:7px;margin-top:8px}.route{font-size:12px;margin:8px 0 0}
+.linkbtn{border-top:1px solid #344047;padding:10px;text-align:center;color:#00d989;font-size:13px;font-weight:600;cursor:pointer;background:#202c33}
+.linkbtn:hover{background:#26353d}
+.validation-quote{display:flex;gap:8px;align-items:stretch;background:#104b3b;border-left:3px solid #35c9b5;border-radius:4px;padding:6px;margin:0 0 7px;min-width:220px}
+.validation-quote-copy{flex:1;min-width:0;font-size:11px;color:#c4d8d2;line-height:1.35}
+.validation-quote-title{font-size:11px;color:#34d9ba;font-weight:700;margin-bottom:4px}
+.validation-quote-caption{font-size:11px;color:#d5e4df}
+.validation-quote img{width:52px;height:58px;object-fit:cover;background:#fff;border-radius:2px;flex:0 0 52px}
+.smallcard{background:#1b2226;padding:8px;border-left:3px solid #00a884;border-radius:5px;margin:5px 0 7px}.smallcard .minihead{font-size:11px;color:#34d9ba;margin-bottom:4px;font-weight:600}.smallcard .minitext{font-size:11px;color:#b7c4c9}
+.notice{font-size:12.5px;line-height:1.45}.notice strong{display:inline;margin:0}
+.typing{display:flex;gap:4px;padding:4px 2px}.typing i{width:5px;height:5px;border-radius:50%;background:#b0bec5;animation:blink 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.composer{display:flex;gap:8px;align-items:center;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:#202c33;min-height:54px}.composeicon{border:0;background:none;color:#d1d9dd;font-size:21px;padding:2px}.inputwrap{background:#2a3942;border-radius:22px;display:flex;align-items:center;min-width:0;flex:1;padding:0 12px;height:38px}.inputwrap input{border:0;outline:0;background:transparent;color:#e9edef;width:100%;font-size:14px}.inputwrap input::placeholder{color:#9eabb1}.send{height:38px;width:38px;flex:0 0 38px;border:0;border-radius:50%;background:#00a884;color:#06352c;font-size:17px;cursor:pointer}
+.settings{position:absolute;z-index:8;inset:7% 4% auto auto;width:92%;max-height:86%;overflow:auto;background:#202c33;border:1px solid #40505a;border-radius:12px;padding:14px;box-shadow:0 12px 35px #000a;display:none}.settings.open{display:block}.settings h3{margin:0 0 5px;font-size:16px}.settings p{font-size:11px;color:#aebac1;line-height:1.4}.field{display:flex;flex-direction:column;gap:4px;margin:10px 0}.field label{font-size:11px;color:#c2cbd0}.field input,.field textarea{background:#111b21;border:1px solid #3b4a52;color:#e9edef;padding:9px;border-radius:6px;font-size:12px;width:100%}.settingrow{display:flex;gap:8px}.settingrow .field{flex:1;min-width:0}.save{background:#00a884;color:#06352c;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer}.close{float:right;background:transparent;border:0;color:#fff;font-size:21px;cursor:pointer}.toast{position:absolute;bottom:65px;left:50%;transform:translateX(-50%);background:#26363e;border:1px solid #43535c;border-radius:18px;padding:8px 12px;font-size:11px;white-space:nowrap;z-index:10}
+
+/* WhatsApp Real Pop-up Fullscreen Viewer */
+.media-modal{position:fixed;inset:0;background:#0b141a;z-index:99;display:none;flex-direction:column;align-items:center;justify-content:center}
+.media-modal.open{display:flex}
+.media-bar{position:absolute;top:0;left:0;right:0;height:60px;background:linear-gradient(to bottom,#0009,transparent);display:flex;align-items:center;justify-content:space-between;padding:0 15px;z-index:100}
+.media-bar button{background:none;border:0;color:#fff;font-size:26px;cursor:pointer}
+.media-content{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+.media-content img{max-width:100%;max-height:85vh;object-fit:contain;box-shadow:0 5px 25px #000}
+
+@media(min-width:700px){body{align-items:center}.app{height:100dvh;max-width:520px;box-shadow:0 0 40px #0007}.chat{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<main class="app">
+ <header class="header">
+  <span class="back">‹</span><div class="avatar" id="avatar">KB</div>
+  <div class="headtext"><div class="name"><span id="brandName">Kaviraj Bus Service</span><span class="verified" id="verified">✓</span></div><div class="sub" id="subtitle">Automated Booking Assistant</div></div>
+  <div class="headicons"><span>⌕</span><button id="settingsOpen" style="background:none;border:0;color:inherit;font-size:20px">⋮</button></div>
+ </header>
+ <section class="chat" id="chat"><div class="datepill" id="datepill">Today</div><div id="messages"></div></section>
+ <form class="composer" id="composer"><button type="button" class="composeicon" id="emoji">☻</button><button type="button" class="composeicon" id="attach">♧</button><div class="inputwrap"><input id="msg" placeholder="Type a message" autocomplete="off"></div><button class="send" type="submit">➤</button></form>
+ 
+ <aside class="settings" id="settings">
+  <button class="close" id="close">×</button><h3>Customize Settings</h3><p>Change branding and booking details.</p>
+  <div class="field"><label>Business name</label><input id="cName" maxlength="70"></div>
+  <div class="field"><label>Subtitle / status</label><input id="cSub" maxlength="70"></div>
+  <div class="field"><label>User Phone Number</label><input id="cPhone" maxlength="15"></div>
+  <div class="settingrow"><div class="field"><label>Avatar initials</label><input id="cAvatar" maxlength="5"></div><div class="field"><label>Ticket fare</label><input id="cFare" maxlength="20"></div></div>
+  <div class="settingrow"><div class="field"><label>From</label><input id="cFrom" maxlength="60"></div><div class="field"><label>To</label><input id="cTo" maxlength="60"></div></div>
+  <div class="field"><label>Custom Image File Name (Optional, e.g. 1610.jpeg)</label><input id="cCustomImg" placeholder="Leave empty for auto DDMM date"></div>
+  <div class="field"><label>Welcome / chatbot banner image</label><input id="cWelcome" type="file" accept="image/*"><small id="welcomeName" style="font-size:10px;color:#aebac1">No welcome image selected</small></div>
+  <div style="margin-top:14px;display:flex;gap:8px">
+    <button class="save" id="save" type="button">Save changes</button>
+    <button class="save" id="clearChat" type="button" style="background:#b74b37;color:white">Clear Chat</button>
+    <button class="save" id="reset" type="button" style="background:#3b4a52;color:white">Reset All</button>
+  </div>
+ </aside>
+ 
+ <div class="media-modal" id="mediaModal">
+   <div class="media-bar">
+     <button id="modalClose">←</button>
+     <span style="font-size:14px;font-weight:600">Kaviraj Bus Service Ticket View</span>
+     <button style="font-size:20px">⋮</button>
+   </div>
+   <div class="media-content">
+     <img id="modalImg" src="" alt="Full view">
+   </div>
+ </div>
+
+ <div class="toast" id="toast" hidden></div>
+</main>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id), chat=$('chat'), messages=$('messages'), input=$('msg'), panel=$('settings'), toast=$('toast');
+
+const defaults={
+  name:'Kaviraj Bus Service',
+  sub:'Automated Booking Assistant',
+  avatar:'KB',
+  phone:'918171262801',
+  fare:'₹22.85',
+  from:'Hyatt Hotel (Gail)',
+  to:'Gtb Nagar',
+  customImg:'',
+  welcomeImage:'',
+  welcomeName:''
+};
+
+let cfg={...defaults};
+let chatStore=[];
+
+const pad=n=>String(n).padStart(2,'0');
+const now=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const genOrderId=()=>'EZV'+new Date().toISOString().replace(/[-:T.Z]/g,'').slice(0,14)+Math.floor(100000+Math.random()*900000);
+let currentOrderId = genOrderId();
+
+function getDateImageName(){
+  if(cfg.customImg && cfg.customImg.trim()) return cfg.customImg.trim();
+  const d = new Date();
+  return pad(d.getDate()) + pad(d.getMonth() + 1);
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function scroll(){requestAnimationFrame(()=>chat.scrollTop=chat.scrollHeight)}
+if($('initialTime')) $('initialTime').textContent=now();
+
+function apply(){
+  $('brandName').textContent=cfg.name;
+  $('subtitle').textContent=cfg.sub;
+  const avatar=$('avatar');
+  avatar.innerHTML=`<img src="profile.png" alt="Profile" onerror="if(!this.dataset.j){this.dataset.j='1';this.src='profile.jpg'}else if(this.dataset.j==='1'){this.dataset.j='2';this.src='profile.jpeg'}else if(this.dataset.j==='2'){this.dataset.j='3';this.src='profile.webp'}else{this.parentNode.textContent='${esc(cfg.avatar)}'}">`;
+}
+
+function saveLocal(){
+  try{localStorage.setItem('dtc_chat_sim_cfg',JSON.stringify(cfg))}catch(e){}
+}
+
+function saveChatToStorage(){
+  try{localStorage.setItem('dtc_chat_history',JSON.stringify(chatStore))}catch(e){}
+}
+
+function stamp(type, timeStr){
+  return `<div class="meta"><span>${timeStr||now()}</span>${type==='out'?'<span class="ticks">✓✓</span>':''}</div>`;
+}
+
+function add(type, html, buttons, record=true, customTime=null, isTicket=false){
+  const timeUsed = customTime || now();
+  let row=document.createElement('div');row.className='row '+type;
+  let b=document.createElement('div');
+  b.className='bubble' + (isTicket ? ' ticket-bubble' : '');
+  b.innerHTML=html+stamp(type, timeUsed);
+  row.appendChild(b);
+  messages.appendChild(row);
+
+  if(buttons && buttons.length){
+    let opts=document.createElement('div');
+    opts.className='options';
+    if(isTicket) opts.style.padding = '0 10px 8px';
+    buttons.forEach(o=>{
+      let btn=document.createElement('button');
+      btn.className='option'+(o.primary?' primary':'');
+      btn.textContent=o.label;
+      btn.onclick=()=>{
+        if(o.actionKey && actionMap[o.actionKey]) actionMap[o.actionKey]();
+        else if(o.action) o.action();
+      };
+      opts.appendChild(btn);
+    });
+    b.appendChild(opts);
+  }
+
+  if(record){
+    const serializableButtons = buttons ? buttons.map(b=>({label:b.label, primary:!!b.primary, actionKey:b.actionKey||''})) : [];
+    chatStore.push({type, html, buttons:serializableButtons, time:timeUsed, isTicket:!!isTicket});
+    saveChatToStorage();
+  }
+
+  scroll();
+  return b;
+}
+
+function out(text){ add('out', esc(text)); }
+
+function typeIndicator(){
+  let r=document.createElement('div');r.className='row in';r.id='typing';
+  r.innerHTML='<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
+  messages.appendChild(r);
+  $('subtitle').textContent='typing...';
+  scroll();
+}
+
+function bot(html, buttons, cb, isTicket=false){
+  typeIndicator();
+  setTimeout(()=>{
+    $('typing')?.remove();$('subtitle').textContent=cfg.sub;
+    add('in', html, buttons, true, null, isTicket);
+    if(cb) cb();
+  }, 400);
+}
+
+function getWelcomeHTML(){
+  const bannerImg=cfg.welcomeImage?`<img src="${cfg.welcomeImage}" alt="Banner" style="width:100%;display:block;border-radius:6px;margin-bottom:8px;background:#fff;object-fit:contain;">`:'';
+  return `${bannerImg}<div style="font-size:13px;line-height:1.5;">👋 <strong>Hi <span style="color:#00d989;">${esc(cfg.phone||'918171262801')}</span>,</strong><br><br>This is ${esc(cfg.name)} Automatic Reply Chatbot.<br><br>Please Choose your preferred language.<br>कृपया आपकी प्राथमिक भाषा चुनें.</div>`;
+}
+
+function menu(){
+  bot('Please select one of the options below to start. 👇',[
+    {label:'🚌  Book Ticket', actionKey:'book'},
+    {label:'↪  Download Ticket', actionKey:'downloadTicket'},
+    {label:'▤  Last Transactions', actionKey:'transactions'}
+  ]);
+}
+
+function language(lang){
+  out(lang);
+  if(lang==='हिंदी'){
+    bot('भाषा चुनी गई। टिकट बुक करने के लिए नीचे दिए गए विकल्प पर क्लिक करें।',[
+      {label:'🚌  टिकट बुक करें', actionKey:'book'}
+    ]);
+  }else{
+    bot('Language selected. Click below to continue.',[
+      {label:'🚌  Book Ticket', actionKey:'book'}
+    ]);
+  }
+}
+
+function book(){
+  out('Book Ticket');
+  currentOrderId = genOrderId();
+  bot('Please click the link below to secure your ticket.',[
+    {label:'↗  Click Here', primary:true, actionKey:'orderCard'}
+  ]);
+}
+
+function orderCard(){
+  out('↗ Click Here');
+  bot(`<div class="card"><div class="cardbody"><div class="orderid">ORDER #${esc(currentOrderId)}</div><div class="item">${esc(cfg.name)} Bus Ticket</div><div class="line"><span>Quantity</span><strong>1</strong></div><div class="line total"><span>Total</span><strong>${esc(cfg.fare)}</strong></div><div class="route">From ${esc(cfg.from)} To ${esc(cfg.to)}</div></div><div class="linkbtn action-view-details">View details</div></div>`,[]);
+}
+
+function details(){
+  out('View details');
+  bot(`<div class="smallcard"><div class="minihead">${esc(cfg.name)} <span style="color:#53bdeb">●</span></div><div class="minitext">▤ ${esc(cfg.name)} Bus Ticket<br>Quantity 1 • ${esc(cfg.fare)}</div></div><div class="notice"><strong>Status: Complete</strong><br>If you do not receive the ticket within 2 minutes and your payment was deducted, Try <strong>Download Ticket</strong> option in Main Menu, In case if ticket is still not received, refund will be processed in 3 to 5 days.</div>`,[],()=>{
+    bot('Use the link below to add your ticket to Google Wallet.',[
+      {label:'↗  Add Now', primary:true, actionKey:'ticket'}
+    ]);
+  });
+}
+
+function ticket(){
+  out('Add Now');
+  const baseName = getDateImageName(); // DDMM, e.g. 1610 for 16 October
+  const candidates = baseName.includes('.')
+    ? [baseName]
+    : [`${baseName}.png`,`${baseName}.jpg`,`${baseName}.jpeg`,`${baseName}.webp`];
+  const candidateJson = JSON.stringify(candidates);
+  const ticketHtml = `
+    <div class="ticket-img-box" onclick="openPopup(this.querySelector('img').src)">
+      <img class="ticket-img" src="${esc(candidates[0])}" data-candidates='${esc(candidateJson)}' data-index="0"
+           alt="Kaviraj Bus Service ticket for ${esc(baseName)}"
+           onerror="tryNextTicketImage(this)">
+    </div>
+    <div class="ticket-body">
+      <div class="notice" style="font-size:12.5px;line-height:1.45;color:#e9edef;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">✅ Ticket Booked Successfully</div>
+        <strong>🔒 Validation Required:</strong><br>This ticket must be validated by the conductor by clicking on "Conductor Validation" button below. Self-validation is not allowed.<br><br>
+        <strong>🕒 Important:</strong><br>The ticket must be validated <strong>within 120 minutes</strong> of creation.<br><br>
+        After that, it will <strong>expire automatically</strong> and <strong>cannot be used</strong>.<br><br>
+        📌 Please show this ticket to the conductor for validation.<br><br>
+        ⚠️ Ticket can't be reused once validated.
+      </div>
+    </div>`;
+  bot(ticketHtml,[{label:'Conductor Validation',primary:true,actionKey:'validate'}],null,true);
+}
+function tryNextTicketImage(img){
+  try{
+    const list=JSON.parse(img.dataset.candidates||'[]');
+    const next=Number(img.dataset.index||0)+1;
+    if(next<list.length){img.dataset.index=String(next);img.src=list[next];return;}
+    img.onerror=null;
+    img.alt='Ticket image not found. Add today’s DDMM image in the same folder.';
+    img.style.minHeight='90px';
+    img.style.display='block';
+    img.style.padding='12px';
+    img.style.background='#fff';
+    img.style.color='#333';
+    img.style.objectFit='contain';
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="260" height="100"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="42%" text-anchor="middle" font-family="Arial" font-size="13" fill="#333">Ticket image not found</text><text x="50%" y="65%" text-anchor="middle" font-family="Arial" font-size="11" fill="#666">Add '+(list[0]||'DDMM.png')+' to this folder</text></svg>');
+  }catch(e){img.onerror=null;}
+}
+function validate(){
+  // Send a WhatsApp-style quoted reply preview of the ticket message,
+  // followed by the "Conductor Validation" text as shown in the reference.
+  const ticketImage = document.querySelector('.ticket-img-box img');
+  const imageSrc = ticketImage ? ticketImage.getAttribute('src') : '';
+  const thumb = imageSrc
+    ? `<img src="${esc(imageSrc)}" alt="Ticket preview" onerror="this.style.display='none'">`
+    : `<div style="width:52px;min-width:52px;height:58px;background:#fff;color:#153e33;display:grid;place-items:center;font-size:22px;border-radius:2px">🚌</div>`;
+  const replyHtml = `<div class="validation-quote">
+      <div class="validation-quote-copy">
+        <div class="validation-quote-title">${esc(cfg.name)} <span style="color:#53bdeb">●</span></div>
+        <div class="validation-quote-caption">▣ ✅ Ticket Booked Successfully<br>…</div>
+      </div>${thumb}
+    </div><div>Conductor Validation</div>`;
+  add('out', replyHtml);
+  const allBtns = document.querySelectorAll('.option.primary');
+  allBtns.forEach(b=>{
+    if(b.textContent.includes('Conductor Validation')){
+      b.textContent = '✓ Validated';
+      b.style.background = '#153e33';
+      b.style.color = '#00a884';
+      b.disabled = true;
+    }
+  });
+  saveChatToStorage();
+}
+
+function downloadTicket(){
+  out('Download Ticket');
+  bot('No sample ticket is available yet. Complete the booking flow to view your demo ticket.',[
+    {label:'🚌  Book Ticket', actionKey:'book'}
+  ]);
+}
+
+function transactions(){
+  out('Last Transactions');
+  bot(`<div class="card"><div class="cardbody"><div class="item">Demo transaction</div><div class="line"><span>Reference</span><strong>${esc(currentOrderId)}</strong></div><div class="line"><span>Service</span><strong>${esc(cfg.name)}</strong></div><div class="line"><span>Status</span><strong style="color:#00d989">Completed</strong></div></div></div>`,[
+    {label:'🚌  Book Ticket', actionKey:'book'}
+  ]);
+}
+
+const actionMap={
+  'book': book,
+  'orderCard': orderCard,
+  'ticket': ticket,
+  'validate': validate,
+  'downloadTicket': downloadTicket,
+  'transactions': transactions,
+  'lang_en': ()=>language('English'),
+  'lang_hi': ()=>language('हिंदी')
+};
+
+window.openPopup = function(src){
+  $('modalImg').src = src;
+  $('mediaModal').classList.add('open');
+};
+$('modalClose').onclick = ()=>$('mediaModal').classList.remove('open');
+$('mediaModal').onclick = (e)=>{ if(e.target===$('mediaModal') || e.target===$('modalImg'))$('mediaModal').classList.remove('open'); };
+
+document.addEventListener('click', e=>{
+  const target = e.target && e.target.closest ? e.target.closest('.action-view-details') : null;
+  if(target){ e.preventDefault(); details(); }
+});
+
+function send(text){
+  const clean=(text||'').trim();
+  if(!clean) return;
+  out(clean);
+  input.value='';
+  const normalized=clean.toLowerCase();
+  if(['hi','hii','hello','hey','namaste','नमस्ते'].includes(normalized)){
+    bot(getWelcomeHTML(),[
+      {label:'English', actionKey:'lang_en'},
+      {label:'हिंदी', actionKey:'lang_hi'}
+    ]);
+  }else if(normalized.includes('book ticket') || normalized==='book'){
+    book();
+  }else if(normalized.includes('download')){
+    downloadTicket();
+  }else if(normalized.includes('transaction')){
+    transactions();
+  }else{
+    bot('Please type “Hi” to start, or choose a language below.',[
+      {label:'English', actionKey:'lang_en'},
+      {label:'हिंदी', actionKey:'lang_hi'}
+    ]);
+  }
+}
+
+$('composer').addEventListener('submit',e=>{e.preventDefault();send(input.value)});$('emoji').onclick=()=>{input.value+='🙂';input.focus()};
+$('attach').onclick=()=>notify('Use settings menu (⋮) to configure.');
+function notify(s){toast.textContent=s;toast.hidden=false;setTimeout(()=>toast.hidden=true,2000)}
+
+function formFill(){
+  $('cName').value=cfg.name;$('cSub').value=cfg.sub;$('cPhone').value=cfg.phone||defaults.phone;
+  $('cAvatar').value=cfg.avatar;$('cFare').value=cfg.fare;$('cFrom').value=cfg.from;
+  $('cTo').value=cfg.to;$('cCustomImg').value=cfg.customImg||'';$('welcomeName').textContent=cfg.welcomeName||(cfg.welcomeImage?'Saved welcome image selected':'No welcome image selected');
+}
+$('settingsOpen').onclick=()=>{formFill();panel.classList.toggle('open')};$('close').onclick=()=>panel.classList.remove('open');
+
+function bindWelcomeImagePicker(){
+  const picker=$('cWelcome');
+  if(!picker) return;
+  picker.addEventListener('change',e=>{
+    const file=e.target.files && e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')){notify('Please choose an image file.');picker.value='';return;}
+    if(file.size>500*1024){notify('Please choose an image under 500 KB for local browser storage.');picker.value='';return;}
+    const reader=new FileReader();
+    reader.onload=()=>{
+      cfg.welcomeImage=String(reader.result);
+      cfg.welcomeName=file.name;
+      $('welcomeName').textContent='Selected: '+file.name+' — click Save changes';
+    };
+    reader.onerror=()=>notify('Could not read this image.');
+    reader.readAsDataURL(file);
+  });
+}
+bindWelcomeImagePicker();
+
+$('save').onclick=()=>{
+  cfg.name=$('cName').value.trim()||defaults.name;
+  cfg.sub=$('cSub').value.trim()||defaults.sub;
+  cfg.phone=$('cPhone').value.trim()||defaults.phone;
+  cfg.avatar=$('cAvatar').value.trim()||'KB';
+  cfg.fare=$('cFare').value.trim()||defaults.fare;
+  cfg.from=$('cFrom').value.trim()||defaults.from;
+  cfg.to=$('cTo').value.trim()||defaults.to;
+  cfg.customImg=$('cCustomImg').value.trim();
+  saveLocal();apply();panel.classList.remove('open');notify('Changes saved');
+};
+
+$('clearChat').onclick=()=>{
+  localStorage.removeItem('dtc_chat_history');
+  location.reload();
+};
+
+$('reset').onclick=()=>{
+  localStorage.clear();
+  location.reload();
+};
+
+try{
+  const old=localStorage.getItem('dtc_chat_sim_cfg');
+  if(old)cfg={...defaults,...JSON.parse(old)};
+}catch(e){}
+
+apply();
+formFill();
+
+try{localStorage.removeItem('dtc_chat_history');}catch(e){}
+
+
+scroll();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
